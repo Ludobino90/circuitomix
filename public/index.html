@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rádio Online</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="radio-player">
+    <audio id="audio" controls autoplay>
+      <source src="https://link-da-sua-radio.com/stream" type="audio/mpeg" />
+      Seu navegador não suporta áudio.
+    </audio>
+  </div>
+
+  <div id="content">
+    <section id="noticias">
+      <h2>NOTÍCIAS</h2>
+      <div id="noticias-content"></div>
+    </section>
+
+    <section id="eventos">
+      <h2>EVENTOS</h2>
+      <div id="eventos-content"></div>
+    </section>
+
+    <section id="publicidade">
+      <h2>PUBLICIDADE</h2>
+      <div class="ads">PUBLICIDADE</div>
+    </section>
+
+    <section id="quem-somos">
+      <h2>QUEM SOMOS</h2>
+      <p>Texto institucional...</p>
+    </section>
+
+    <section id="contato">
+      <h2>CONTATO</h2>
+      <form>
+        <input type="text" placeholder="Seu nome" />
+        <input type="email" placeholder="Seu e-mail" />
+        <textarea placeholder="Sua mensagem"></textarea>
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <footer>
+      <div class="social">
+        <a href="#">Instagram</a>
+        <a href="#">Facebook</a>
+        <a href="#">Twitter</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="js/player.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
