@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel Admin</title>
+  <style>
+    body { background: #111; color: #fff; max-width: 600px; margin: 40px auto; }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    input, textarea, select { padding: 10px; border-radius: 4px; border: none; }
+    button { background-color: #ff6600; color: #fff; padding: 10px; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Painel Administrativo</h1>
+
+  <div id="loginArea">
+    <input type="password" id="senha" placeholder="Digite a senha de admin" />
+    <button onclick="login()">Entrar</button>
+    <p id="loginStatus"></p>
+  </div>
+
+  <div id="adminArea" style="display:none;">
+    <form id="adminForm" enctype="multipart/form-data">
+      <label>Tipo de conteúdo:
+        <select id="tipo">
+          <option value="noticia">Notícia</option>
+          <option value="evento">Evento</option>
+        </select>
+      </label>
+      <input type="text" id="titulo" placeholder="Título" required />
+      <textarea id="conteudo" placeholder="Conteúdo ou data do evento" required></textarea>
+      <label>Imagem ou vídeo:</label>
+      <input type="file" id="media" accept="image/*,video/*" />
+      <button type="submit">Publicar</button>
+    </form>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const senhaCorreta = "admin123";
+
+    function login() {
+      const senha = document.getElementById("senha").value;
+      if (senha === senhaCorreta) {
+        document.getElementById("loginArea").style.display = "none";
+        document.getElementById("adminArea").style.display = "block";
+      } else {
+        document.getElementById("loginStatus").innerText = "Senha incorreta.";
+      }
+    }
+
+    document.getElementById('adminForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const tipo = document.getElementById('tipo').value;
+      const titulo = document.getElementById('titulo').value;
+      const conteudo = document.getElementById('conteudo').value;
+      const media = document.getElementById('media').files[0];
+
+      const formData = new FormData();
+      formData.append("tipo", tipo);
+      formData.append("titulo", titulo);
+      formData.append("conteudo", conteudo);
+      if (media) formData.append("media", media);
+
+      fetch(`/api/${tipo}s`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById('status').innerText = 'Publicação realizada com sucesso!';
+        document.getElementById('adminForm').reset();
+      })
+      .catch(err => {
+        document.getElementById('status').innerText = 'Erro ao publicar.';
+        console.error(err);
+      });
+    });
+  </script>
+</body>
+</html>
