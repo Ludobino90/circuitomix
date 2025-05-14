@@ -77,3 +77,33 @@ app.post('/api/eventos', upload.single('media'), (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
+
+
+//coneccao com o MongoDB
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb+srv://admin:SENHA@CLUSTER.mongodb.net/circuitomix?retryWrites=true&w=majority')
+  .then(() => console.log('MongoDB conectado!'))
+  .catch(err => console.error('Erro ao conectar MongoDB:', err));
+
+// Salvar uma nova noticia
+
+const Noticia = require('./models/Noticia');
+
+app.post('/api/publicar', upload.single('midia'), async (req, res) => {
+  try {
+    const novaNoticia = new Noticia({
+      titulo: req.body.titulo,
+      conteudo: req.body.conteudo,
+      midia: req.file ? '/uploads/' + req.file.filename : null
+    });
+
+    await novaNoticia.save();
+    res.status(200).json({ message: 'Publicação salva com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao salvar publicação' });
+  }
+});
+
+
