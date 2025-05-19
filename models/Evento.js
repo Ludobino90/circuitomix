@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const noticiaSchema = new mongoose.Schema({
+const eventoSchema = new mongoose.Schema({
   titulo: String,
   conteudo: String,
   midia: String,
@@ -8,6 +8,6 @@ const noticiaSchema = new mongoose.Schema({
 });
 
 // Remove modelo anterior se já existir
-delete mongoose.connection.models['Noticia'];
+delete mongoose.connection.models['Evento'];
 
-module.exports = mongoose.model('Noticia', noticiaSchema);
+module.exports = mongoose.model('Evento', eventoSchema);
