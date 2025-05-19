@@ -3,14 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Diretórios
 const dataDir = path.join(__dirname, 'api');
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 
@@ -19,7 +22,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configuração de upload com multer
+// Multer: upload de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -30,7 +33,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Utilitários para ler e escrever JSON
+// Utilitários para arquivos JSON
 function readJSON(file) {
   const filePath = path.join(dataDir, file);
   if (!fs.existsSync(filePath)) return [];
@@ -43,12 +46,12 @@ function writeJSON(file, data) {
 
 // ================= ROTAS ================= //
 
-// GET notícias
+// JSON - GET notícias
 app.get('/api/noticias', (req, res) => {
   res.json(readJSON('noticias.json'));
 });
 
-// POST notícia com mídia
+// JSON - POST notícia com mídia
 app.post('/api/noticias', upload.single('media'), (req, res) => {
   const { titulo, conteudo } = req.body;
   const mediaPath = req.file ? '/uploads/' + req.file.filename : null;
@@ -58,12 +61,12 @@ app.post('/api/noticias', upload.single('media'), (req, res) => {
   res.json({ success: true });
 });
 
-// GET eventos
+// JSON - GET eventos
 app.get('/api/eventos', (req, res) => {
   res.json(readJSON('eventos.json'));
 });
 
-// POST evento com mídia
+// JSON - POST evento com mídia
 app.post('/api/eventos', upload.single('media'), (req, res) => {
   const { titulo, conteudo } = req.body;
   const mediaPath = req.file ? '/uploads/' + req.file.filename : null;
@@ -73,24 +76,16 @@ app.post('/api/eventos', upload.single('media'), (req, res) => {
   res.json({ success: true });
 });
 
-// Inicia o servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
-
-
-//coneccao com o MongoDB
-
-const mongoose = require('mongoose');
-
-mongoose.connect('mongodb+srv://admin:SENHA@CLUSTER.mongodb.net/circuitomix?retryWrites=true&w=majority')
-  .then(() => console.log('MongoDB conectado!'))
+// Conexão com MongoDB
+mongoose.connect('mongodb+srv://admin1:senha1234@CLUSTER.mongodb.net/circuitomix?retryWrites=true&w=majority')
+  .then(() => console.log('✅ MongoDB conectado!'))
   .catch(err => console.error('Erro ao conectar MongoDB:', err));
 
-// Salvar uma nova noticia
-
+// Modelos MongoDB
 const Noticia = require('./models/Noticia');
+const Evento = require('./models/Evento'); // ← só se desejar salvar eventos no MongoDB futuramente
 
+// MongoDB - POST publicação de notícia
 app.post('/api/publicar', upload.single('midia'), async (req, res) => {
   try {
     const novaNoticia = new Noticia({
@@ -102,8 +97,12 @@ app.post('/api/publicar', upload.single('midia'), async (req, res) => {
     await novaNoticia.save();
     res.status(200).json({ message: 'Publicação salva com sucesso!' });
   } catch (error) {
+    console.error('Erro ao salvar notícia no MongoDB:', error);
     res.status(500).json({ error: 'Erro ao salvar publicação' });
   }
 });
 
-
+// Inicia o servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+});
