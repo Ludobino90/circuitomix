@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -22,62 +21,242 @@
   </div>
 
   <div id="adminArea" style="display:none;">
+    
+    <h2>Nova Publicação</h2>
     <form id="adminForm" enctype="multipart/form-data">
       <label>Tipo de conteúdo:
         <select id="tipo">
-          <option value="noticia">Notícia</option>
-          <option value="evento">Evento</option>
+          <option value="noticias">Notícia</option> <!-- Alterado para plural -->
+          <option value="eventos">Evento</option>   <!-- Alterado para plural -->
         </select>
       </label>
-      <input type="text" id="titulo" placeholder="Título" required />
-      <textarea id="conteudo" placeholder="Conteúdo ou data do evento" required></textarea>
+      <input type="text" id="titulo" name="titulo" maxlength="80" placeholder="Título" required />
+      <textarea id="conteudo" name="conteudo" maxlength="1500" placeholder="Conteúdo ou data do evento" required></textarea>
       <label>Imagem ou vídeo:</label>
-      <input type="file" id="media" accept="image/*,video/*" />
+      <input type="file" id="media" name="midia" accept="image/*,video/*" /> <!-- Adicionado name="midia" -->
       <button type="submit">Publicar</button>
     </form>
     <p id="status"></p>
   </div>
+  <div id="lista-publicacoes">
+      <h2>Publicações Existentes</h2>
+      <div id="publicacoes-container" class="grid-lista"></div>
+    </div>
 
-  <script>
-    const senhaCorreta = "admin123";
+    <div id="editar-publicacao" style="display:none;">
+      <h2>Editar Publicação</h2>
+      <form id="formEditar">
+      <!-- Campos de edição aqui -->
+      </form>
+    </div>
 
-    function login() {
-      const senha = document.getElementById("senha").value;
-      if (senha === senhaCorreta) {
-        document.getElementById("loginArea").style.display = "none";
-        document.getElementById("adminArea").style.display = "block";
-      } else {
-        document.getElementById("loginStatus").innerText = "Senha incorreta.";
-      }
-    }
-
-    document.getElementById('adminForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const tipo = document.getElementById('tipo').value;
-      const titulo = document.getElementById('titulo').value;
-      const conteudo = document.getElementById('conteudo').value;
-      const media = document.getElementById('media').files[0];
-
-      const formData = new FormData();
-      formData.append("tipo", tipo);
-      formData.append("titulo", titulo);
-      formData.append("conteudo", conteudo);
-      if (media) formData.append("media", media);
-
-      fetch(`/api/${tipo}s`, {
+  <!-- Atualize o script para -->
+<script>
+  // Função de login atualizada
+  async function login() {
+    const senha = document.getElementById('senha').value;
+    
+    try {
+      const response = await fetch('/api/login', {
         method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(() => {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ senha })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Armazena a senha criptografada em sessionStorage
+        sessionStorage.setItem('authToken', btoa(senha));
+        document.getElementById('loginArea').style.display = 'none';
+        document.getElementById('adminArea').style.display = 'block';
+      } else {
+        document.getElementById('loginStatus').innerText = 'Senha incorreta';
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      await carregarPublicacoes();
+    }
+  }
+
+  // Submit do formulário atualizado
+  document.getElementById('adminForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const tipo = document.getElementById('tipo').value;
+  const formData = new FormData(e.target);
+  
+  try {
+    const response = await fetch(`/api/${tipo}`, { 
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + sessionStorage.getItem('authToken')
+      },
+      body: formData
+    });
+
+      if (response.ok) {
         document.getElementById('status').innerText = 'Publicação realizada com sucesso!';
         document.getElementById('adminForm').reset();
-      })
-      .catch(err => {
-        document.getElementById('status').innerText = 'Erro ao publicar.';
-        console.error(err);
-      });
+        setTimeout(() => location.reload(), 1500); // Recarrega após 1.5s
+      } else {
+        throw new Error('Erro na requisição');
+      }
+    } catch (error) {
+      document.getElementById('status').innerText = 'Erro ao publicar. Tente novamente.';
+      console.error('Erro:', error);
+    }
+  });
+
+  // Adicione estas funções
+async function carregarPublicacoes() {
+  try {
+    const [noticias, eventos] = await Promise.all([
+      fetch('/api/noticias').then(res => res.json()),
+      fetch('/api/eventos').then(res => res.json())
+    ]);
+    
+    const todasPublicacoes = [...noticias, ...eventos]
+      .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    renderizarPublicacoes(todasPublicacoes);
+  } catch (error) {
+    console.error('Erro ao carregar publicações:', error);
+  }
+}
+
+// Função renderizarPublicacoes corrigida
+function renderizarPublicacoes(publicacoes) {
+  const container = document.getElementById('publicacoes-container');
+  container.innerHTML = publicacoes.map(pub => `
+    <div class="publicacao-item" data-id="${pub._id}" data-tipo="${pub.__tipo}">
+      <div class="botoes-acao">
+        <button class="btn-editar" onclick="abrirEdicao('${pub._id}', '${pub.__tipo}')">Editar</button>
+        <button class="btn-excluir" onclick="excluirPublicacao('${pub._id}', '${pub.__tipo}')">Excluir</button>
+      </div>
+      <h3>${pub.titulo}</h3>
+      ${pub.midia ? `<div><img src="${pub.midia}" style="max-width: 200px;"></div>` : ''}
+      <p>${pub.conteudo}</p>
+      <small>Publicado em: ${new Date(pub.data).toLocaleDateString()}</small>
+    </div>
+  `).join('');
+}
+
+// Função salvarEdicao corrigida
+async function salvarEdicao() {
+  const formData = new FormData();
+  formData.append('titulo', document.getElementById('edit-titulo').value);
+  formData.append('conteudo', document.getElementById('edit-conteudo').value);
+  
+  const midiaInput = document.getElementById('edit-midia');
+  if (midiaInput.files[0]) {
+    formData.append('midia', midiaInput.files[0]);
+  }
+
+  try {
+    const response = await fetch(`/api/${publicacaoEditando.tipo}/${publicacaoEditando.id}`, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': 'Basic ' + sessionStorage.getItem('authToken') 
+      },
+      body: formData
     });
-  </script>
+
+    if (!response.ok) throw new Error('Erro na requisição');
+    
+    fecharEdicao();
+    carregarPublicacoes();
+    document.getElementById('status').innerText = 'Alterações salvas com sucesso!';
+  } catch (error) {
+    document.getElementById('status').innerText = 'Erro ao salvar alterações';
+    console.error('Erro:', error);
+  }
+}
+
+async function excluirPublicacao(id, tipo) {
+  if (confirm('Tem certeza que deseja excluir esta publicação?')) {
+    try {
+      await fetch(`/api/${tipo}/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Basic ' + sessionStorage.getItem('authToken') }
+      });
+      carregarPublicacoes();
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+    }
+  }
+}
+
+document.getElementById('adminArea').style.display = 'block';
+carregarPublicacoes();
+
+//---------------------------------------------------------------------
+
+// Modal de Edição
+async function abrirEdicao(id, tipo) {
+  try {
+    publicacaoEditando = { id, tipo };
+    
+    const response = await fetch(`/api/${tipo}/${id}`);
+    if (!response.ok) throw new Error('Publicação não encontrada');
+    
+    const data = await response.json();
+    
+    document.getElementById('editar-publicacao').style.display = 'block';
+    document.body.insertAdjacentHTML('beforeend', '<div class="overlay"></div>');
+    
+    document.getElementById('formEditar').innerHTML = `
+      <input type="text" id="edit-titulo" value="${data.titulo}" required>
+      <textarea id="edit-conteudo" required>${data.conteudo}</textarea>
+      <label>Nova mídia (opcional):
+        <input type="file" id="edit-midia" name="midia">
+      </label>
+      ${data.midia ? `<p>Mídia atual: <a href="${data.midia}" target="_blank">Visualizar</a></p>` : ''}
+      <button type="button" onclick="salvarEdicao()">Salvar</button>
+      <button type="button" onclick="fecharEdicao()">Cancelar</button>
+    `;
+  } catch (error) {
+    console.error('Erro ao abrir edição:', error);
+    alert('Erro ao carregar dados para edição');
+  }
+}
+
+function fecharEdicao() {
+  document.getElementById('editar-publicacao').style.display = 'none';
+  document.querySelector('.overlay').remove();
+}
+
+async function salvarEdicao() {
+  try {
+    const formData = new FormData();
+    formData.append('titulo', document.getElementById('edit-titulo').value);
+    formData.append('conteudo', document.getElementById('edit-conteudo').value);
+    
+    const midiaInput = document.getElementById('edit-midia');
+    if (midiaInput.files[0]) {
+      formData.append('midia', midiaInput.files[0]);
+    }
+
+    const response = await fetch(`/api/${publicacaoEditando.tipo}/${publicacaoEditando.id}`, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': 'Basic ' + sessionStorage.getItem('authToken')
+      },
+      body: formData
+    });
+
+    if (!response.ok) throw new Error('Erro na resposta do servidor');
+    
+    fecharEdicao();
+    await carregarPublicacoes();
+    alert('Publicação atualizada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao salvar edição:', error);
+    alert('Erro ao salvar alterações');
+  }
+}
+</script>
 </body>
 </html>

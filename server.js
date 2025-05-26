@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -5,24 +6,32 @@ const cors = require('cors');
 const multer = require('multer');
 const mongoose = require('mongoose');
 
+// Modelos
+const Noticia = require('./models/Noticia');
+const Evento = require('./models/Evento');
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// Diretórios
-const dataDir = path.join(__dirname, 'api');
+// Configurações
+const STREAM_URL = 'https://stream.zeno.fm/2zefp4qy0zzuv';
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 
-// Criar pasta uploads se não existir
+// Configurar diretórios
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Multer: upload de arquivos
+// Middlewares
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());
+app.use(express.static('public'));
+
+// Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -33,76 +42,122 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Utilitários para arquivos JSON
-function readJSON(file) {
-  const filePath = path.join(dataDir, file);
-  if (!fs.existsSync(filePath)) return [];
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
+// ======== AUTENTICAÇÃO ======== //
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    const senhaDecodificada = Buffer.from(token, 'base64').toString('ascii');
+    
+    if (senhaDecodificada === process.env.ADMIN_PASSWORD) {
+      return next();
+    }
+  }
+  
+  res.status(401).json({ error: 'Acesso não autorizado' });
+};
 
-function writeJSON(file, data) {
-  fs.writeFileSync(path.join(dataDir, file), JSON.stringify(data, null, 2));
-}
+// ======== ROTAS ======== //
 
-// ================= ROTAS ================= //
-
-// JSON - GET notícias
-app.get('/api/noticias', (req, res) => {
-  res.json(readJSON('noticias.json'));
-});
-
-// JSON - POST notícia com mídia
-app.post('/api/noticias', upload.single('media'), (req, res) => {
-  const { titulo, conteudo } = req.body;
-  const mediaPath = req.file ? '/uploads/' + req.file.filename : null;
-  const noticias = readJSON('noticias.json');
-  noticias.push({ titulo, conteudo, media: mediaPath });
-  writeJSON('noticias.json', noticias);
-  res.json({ success: true });
-});
-
-// JSON - GET eventos
-app.get('/api/eventos', (req, res) => {
-  res.json(readJSON('eventos.json'));
-});
-
-// JSON - POST evento com mídia
-app.post('/api/eventos', upload.single('media'), (req, res) => {
-  const { titulo, conteudo } = req.body;
-  const mediaPath = req.file ? '/uploads/' + req.file.filename : null;
-  const eventos = readJSON('eventos.json');
-  eventos.push({ titulo, conteudo, media: mediaPath });
-  writeJSON('eventos.json', eventos);
-  res.json({ success: true });
-});
-
-// Conexão com MongoDB
-mongoose.connect('mongodb+srv://admin1:senha1234@CLUSTER.mongodb.net/circuitomix?retryWrites=true&w=majority')
-  .then(() => console.log('✅ MongoDB conectado!'))
-  .catch(err => console.error('Erro ao conectar MongoDB:', err));
-
-// Modelos MongoDB
-const Noticia = require('./models/Noticia');
-const Evento = require('./models/Evento'); // ← só se desejar salvar eventos no MongoDB futuramente
-
-// MongoDB - POST publicação de notícia
-app.post('/api/publicar', upload.single('midia'), async (req, res) => {
-  try {
-    const novaNoticia = new Noticia({
-      titulo: req.body.titulo,
-      conteudo: req.body.conteudo,
-      midia: req.file ? '/uploads/' + req.file.filename : null
-    });
-
-    await novaNoticia.save();
-    res.status(200).json({ message: 'Publicação salva com sucesso!' });
-  } catch (error) {
-    console.error('Erro ao salvar notícia no MongoDB:', error);
-    res.status(500).json({ error: 'Erro ao salvar publicação' });
+// Login
+app.post('/api/login', (req, res) => {
+  const { senha } = req.body;
+  if (senha === process.env.ADMIN_PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Senha incorreta' });
   }
 });
 
-// Inicia o servidor
+// Rotas CRUD para Notícias e Eventos
+['noticias', 'eventos'].forEach(tipo => {
+  const Model = tipo === 'noticias' ? Noticia : Evento;
+
+  // Listar todos com tipo
+  app.get(`/api/${tipo}`, async (req, res) => {
+    try {
+      const dados = await Model.find().sort({ data: -1 });
+      const dadosComTipo = dados.map(item => ({
+        ...item._doc,
+        __tipo: tipo
+      }));
+      res.json(dadosComTipo);
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao buscar dados' });
+    }
+  });
+
+  // Criar
+  app.post(`/api/${tipo}`, authenticate, upload.single('midia'), async (req, res) => {
+    try {
+      if (!req.body.titulo || !req.body.conteudo) {
+        return res.status(400).json({ error: 'Campos obrigatórios faltando' });
+      }
+
+      const novoItem = new Model({
+        titulo: req.body.titulo,
+        conteudo: req.body.conteudo,
+        midia: req.file ? `/uploads/${req.file.filename}` : null
+      });
+      
+      await novoItem.save();
+      res.status(201).json(novoItem);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Buscar por ID
+  app.get(`/api/${tipo}/:id`, async (req, res) => {
+    try {
+      const publicacao = await Model.findById(req.params.id);
+      res.json(publicacao);
+    } catch (error) {
+      res.status(500).json({ error: 'Publicação não encontrada' });
+    }
+  });
+
+  // Atualizar
+  app.put(`/api/${tipo}/:id`, authenticate, upload.single('midia'), async (req, res) => {
+    try {
+      const updates = {
+        titulo: req.body.titulo,
+        conteudo: req.body.conteudo
+      };
+
+      if (req.file) {
+        updates.midia = `/uploads/${req.file.filename}`;
+      }
+
+      const atualizado = await Model.findByIdAndUpdate(
+        req.params.id,
+        updates,
+        { new: true }
+      );
+      res.json(atualizado);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Excluir
+  app.delete(`/api/${tipo}/:id`, authenticate, async (req, res) => {
+    try {
+      await Model.findByIdAndDelete(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+// Conexão MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Conectado ao MongoDB'))
+  .catch(err => console.error('❌ Erro MongoDB:', err));
+
+// Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
