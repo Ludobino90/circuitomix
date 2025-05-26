@@ -9,6 +9,48 @@
     form { display: flex; flex-direction: column; gap: 10px; }
     input, textarea, select { padding: 10px; border-radius: 4px; border: none; }
     button { background-color: #ff6600; color: #fff; padding: 10px; border: none; border-radius: 4px; cursor: pointer; }
+    .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #222;
+    padding: 20px;
+    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0 0 20px #000;
+    max-width: 90%;
+    width: 500px;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+  }
+
+#editar-publicacao {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #222;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 1001;
+  max-width: 500px;
+  width: 90%;
+}
+
+#editar-publicacao input, #editar-publicacao textarea {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
   </style>
 </head>
 <body>
@@ -43,12 +85,16 @@
       <div id="publicacoes-container" class="grid-lista"></div>
     </div>
 
-    <div id="editar-publicacao" style="display:none;">
+    <div id="editar-publicacao" class="modal" style="display:none;">
       <h2>Editar Publicação</h2>
-      <form id="formEditar">
-      <!-- Campos de edição aqui -->
-      </form>
+      <form id="formEditar"></form>
     </div>
+    <div id="visualizacao-midia" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
+  <button onclick="fecharVisualizacaoMidia()" style="position:absolute; top:20px; right:20px; background:#ff6600; color:#fff; padding:10px; border:none; border-radius:5px; z-index:1001;">Fechar</button>
+  <div id="conteudo-midia"></div>
+</div>
+
+
 
   <!-- Atualize o script para -->
 <script>
@@ -72,6 +118,7 @@
         sessionStorage.setItem('authToken', btoa(senha));
         document.getElementById('loginArea').style.display = 'none';
         document.getElementById('adminArea').style.display = 'block';
+        carregarPublicacoes();
       } else {
         document.getElementById('loginStatus').innerText = 'Senha incorreta';
       }
@@ -137,7 +184,14 @@ function renderizarPublicacoes(publicacoes) {
         <button class="btn-excluir" onclick="excluirPublicacao('${pub._id}', '${pub.__tipo}')">Excluir</button>
       </div>
       <h3>${pub.titulo}</h3>
-      ${pub.midia ? `<div><img src="${pub.midia}" style="max-width: 200px;"></div>` : ''}
+      ${pub.midia ? `
+  <div>
+    ${pub.midia.endsWith('.mp4') ? 
+      `<video src="${pub.midia}" controls style="max-width:200px;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'video')"></video>` :
+      `<img src="${pub.midia}" style="max-width:200px; cursor:pointer;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'img')">`
+    }
+  </div>` : ''
+}
       <p>${pub.conteudo}</p>
       <small>Publicado em: ${new Date(pub.data).toLocaleDateString()}</small>
     </div>
@@ -228,6 +282,41 @@ function fecharEdicao() {
   document.querySelector('.overlay').remove();
 }
 
+function abrirMidia(midiaUrl) {
+  const mediaViewer = document.getElementById('mediaViewer');
+  const mediaContent = document.getElementById('mediaContent');
+  const ext = midiaUrl.split('.').pop().toLowerCase();
+
+  if (['mp4', 'webm'].includes(ext)) {
+    mediaContent.innerHTML = `<video src="${midiaUrl}" controls autoplay style="max-width:100%; max-height:100%;"></video>`;
+  } else {
+    mediaContent.innerHTML = `<img src="${midiaUrl}" style="max-width:100%; max-height:100%;" />`;
+  }
+
+  mediaViewer.style.display = 'flex';
+}
+
+function fecharMidia() {
+  document.getElementById('mediaViewer').style.display = 'none';
+  document.getElementById('mediaContent').innerHTML = '';
+}
+
+function abrirVisualizacaoMidia(url, tipo) {
+  const container = document.getElementById('conteudo-midia');
+  container.innerHTML = tipo === 'video'
+    ? `<video src="${url}" controls autoplay style="max-width:90vw; max-height:80vh;"></video>`
+    : `<img src="${url}" style="max-width:90vw; max-height:80vh;">`;
+
+  document.getElementById('visualizacao-midia').style.display = 'flex';
+}
+
+function fecharVisualizacaoMidia() {
+  document.getElementById('visualizacao-midia').style.display = 'none';
+  document.getElementById('conteudo-midia').innerHTML = '';
+}
+
+
+
 async function salvarEdicao() {
   try {
     const formData = new FormData();
@@ -258,5 +347,11 @@ async function salvarEdicao() {
   }
 }
 </script>
+
+<div id="mediaViewer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+  <div id="mediaContent" style="max-width:90%; max-height:90%;"></div>
+  <button onclick="fecharMidia()" style="position:absolute; top:20px; right:20px; background:#f00; color:#fff; padding:10px; border:none; border-radius:5px;">Fechar</button>
+</div>
+
 </body>
 </html>
