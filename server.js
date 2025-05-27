@@ -46,9 +46,9 @@ const upload = multer({ storage });
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
-  if (authHeader) {
+  if (authHeader && authHeader.startsWith('Basic ')) {
     const token = authHeader.split(' ')[1];
-    const senhaDecodificada = Buffer.from(token, 'base64').toString('ascii');
+    const senhaDecodificada = Buffer.from(token, 'base64').toString('utf-8');
     
     if (senhaDecodificada === process.env.ADMIN_PASSWORD) {
       return next();
@@ -61,8 +61,13 @@ const authenticate = (req, res, next) => {
 // ======== ROTAS ======== //
 
 // Login
+// Modifique a rota de login para:
 app.post('/api/login', (req, res) => {
-  const { senha } = req.body;
+  const { senha } = req.body; // Recebe a senha em texto puro
+  
+  console.log('Senha recebida:', senha);
+  console.log('Senha esperada:', process.env.ADMIN_PASSWORD);
+
   if (senha === process.env.ADMIN_PASSWORD) {
     res.json({ success: true });
   } else {

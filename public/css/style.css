@@ -298,3 +298,25 @@ video.midia {
   color: white;
 }
 
+#loginArea {
+  display: block !important; /* Força a exibição */
+}
+
+/*.admin-autenticado #adminArea,
+.admin-autenticado #lista-publicacoes {
+  display: block !important;
+}
+
+.admin-autenticado #loginArea {
+  display: none !important;
+}*/
+
+#adminArea,
+#lista-publicacoes {
+  display: none;
+}
+
+.admin-autenticado #adminArea,
+.admin-autenticado #lista-publicacoes {
+  display: block !important;
+}
