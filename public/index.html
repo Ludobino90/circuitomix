@@ -5,52 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rádio Online</title>
   <link rel="stylesheet" href="css/style.css" />
-  <!-- Adicionar Howler.js para compatibilidade -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/3.7.0/howler.min.js"></script>
+  
 </head>
 <body>
-  <!-- Player de Rádio Atualizado -->
-  <div id="radio-player">
-    <div id="player-controls">
-      <button id="playPauseBtn">▶️ Play</button>
-      <input type="range" id="volume" min="0" max="1" step="0.1" value="0.8">
-      <span id="status">🔴 Offline</span>
+  <!-- Barra Superior com Logo, Player e Busca -->
+  <div id="top-bar">
+    <div id="logo">
+      <a href="#"><img src="img/circuito_mix_logo.png"></a>
+    </div>
+    
+    <div id="radio-player">
+      <div id="player-controls">
+        <button id="playPauseBtn">▶️ Play</button>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="0.8">
+        <span id="status">🔴 Offline</span>
+      </div>
+    </div>
+    
+    <div id="search-area">
+      <input type="text" id="site-search" placeholder="Buscar no site...">
+      <button id="search-btn">🔍</button>
     </div>
   </div>
-  <script>
-    // Configuração Internacional
-    const STREAM_URL = 'https://stream.zeno.fm/2zefp4qy0zzuv?_=1'; // Bypass de cache
-    let radio = null;
-
-    // Inicialização segura
-    function initPlayer() {
-      radio = new Howl({
-        src: [STREAM_URL],
-        html5: true,
-        format: ['mp3'],
-        autoplay: false,
-        preload: 'metadata',
-        onplay: () => {
-          document.getElementById('status').textContent = '🎵 Transmitindo';
-          document.getElementById('playPauseBtn').textContent = '⏸️ Pause';
-        },
-        onpause: () => {
-          document.getElementById('status').textContent = '⏸️ Pausado';
-          document.getElementById('playPauseBtn').textContent = '▶️ Play';
-        },
-        onloaderror: () => {
-          document.getElementById('status').textContent = '⚠️ Use VPN (Brasil)';
-        }
-      });
-
-      // Controles
-      document.getElementById('playPauseBtn').onclick = () => radio.playing() ? radio.pause() : radio.play();
-      document.getElementById('volume').addEventListener('input', (e) => radio.volume(e.target.value));
-    }
-
-    // Iniciar após interação do usuário
-    document.addEventListener('click', initPlayer, { once: true });
-  </script>
 
   <div id="content">
     <section id="noticias">
@@ -94,5 +71,54 @@
   
   <script src="./js/player.js"></script>
   <script src="./js/main.js"></script>
+  <script>
+    // Função de busca simplificada
+    document.getElementById('search-btn').addEventListener('click', performSearch);
+    document.getElementById('site-search').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') performSearch();
+    });
+
+    function performSearch() {
+      const term = document.getElementById('site-search').value.toLowerCase().trim();
+      if (!term) return;
+      
+      // Elementos onde buscar
+      const elements = document.querySelectorAll('#content *:not(script):not(style)');
+      let found = false;
+      
+      // Resetar destaques anteriores
+      elements.forEach(el => {
+        el.style.backgroundColor = '';
+        el.style.color = '';
+      });
+      
+      // Realizar busca
+      elements.forEach(el => {
+        if (el.textContent.toLowerCase().includes(term)) {
+          el.style.backgroundColor = '#ffffcc';
+          el.style.color = '#000';
+          found = true;
+          
+          // Rolar para o primeiro resultado
+          if (!found) el.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+      });
+      
+      // Feedback visual
+      const btn = document.getElementById('search-btn');
+      if (found) {
+        btn.textContent = '✓';
+        btn.style.background = '#4CAF50';
+      } else {
+        btn.textContent = '✕';
+        btn.style.background = '#f44336';
+      }
+      
+      setTimeout(() => {
+        btn.textContent = '🔍';
+        btn.style.background = '#ff6600';
+      }, 2000);
+    }
+  </script>
 </body>
 </html>
