@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 // Modelos
 const Noticia = require('./models/Noticia');
 const Evento = require('./models/Evento');
+const Destaque = require('./models/Destaque');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,9 +76,17 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Rotas CRUD para Notícias e Eventos
-['noticias', 'eventos'].forEach(tipo => {
-  const Model = tipo === 'noticias' ? Noticia : Evento;
+// Rotas CRUD para Notícias, Eventos e Destaques
+['noticias', 'eventos', 'destaques'].forEach(tipo => {
+  // Selecionar o modelo correto
+  let Model;
+  if (tipo === 'noticias') {
+    Model = Noticia;
+  } else if (tipo === 'eventos') {
+    Model = Evento;
+  } else if (tipo === 'destaques') {
+    Model = Destaque;
+  }
 
   // Listar todos com tipo
   app.get(`/api/${tipo}`, async (req, res) => {
@@ -103,6 +112,7 @@ app.post('/api/login', (req, res) => {
       const novoItem = new Model({
         titulo: req.body.titulo,
         conteudo: req.body.conteudo,
+        link: req.body.link || '',
         midia: req.file ? `/uploads/${req.file.filename}` : null
       });
       
@@ -128,7 +138,8 @@ app.post('/api/login', (req, res) => {
     try {
       const updates = {
         titulo: req.body.titulo,
-        conteudo: req.body.conteudo
+        conteudo: req.body.conteudo,
+        link: req.body.link || ''
       };
 
       if (req.file) {

@@ -168,16 +168,18 @@
   <div id="adminArea">
     <h2>Nova Publicação</h2>
     <form id="adminForm" enctype="multipart/form-data">
-      <label>Tipo de conteúdo:
+      <label>Tipo do conteúdo:
         <select id="tipo">
           <option value="noticias">Notícia</option>
           <option value="eventos">Evento</option>
-        </select>
+          <option value="destaques">Destaque</option> <!-- Novo -->
+      </select>
       </label>
       <input type="text" id="titulo" name="titulo" maxlength="80" placeholder="Título" required />
       <textarea id="conteudo" name="conteudo" maxlength="1500" placeholder="Conteúdo ou data do evento" required></textarea>
       <label>Imagem ou vídeo:</label>
       <input type="file" id="media" name="midia" accept="image/*,video/*" />
+      <input type="url" id="link" name="link" placeholder="Link externo (opcional)" />
       <button type="submit">Publicar</button>
     </form>
     <p id="status"></p>
@@ -260,43 +262,69 @@
     });
 
     async function carregarPublicacoes() {
-      try {
-        const [noticias, eventos] = await Promise.all([
-          fetch('/api/noticias').then(res => res.json()),
-          fetch('/api/eventos').then(res => res.json())
-        ]);
+  try {
+    // Buscar notícias, eventos e destaques separadamente
+    const [noticiasRes, eventosRes, destaquesRes] = await Promise.all([
+      fetch('/api/noticias'),
+      fetch('/api/eventos'),
+      fetch('/api/destaques')
+    ]);
 
-        const todasPublicacoes = [...noticias, ...eventos].sort((a, b) => new Date(b.data) - new Date(a.data));
-        renderizarPublicacoes(todasPublicacoes);
-      } catch (error) {
-        console.error('Erro ao carregar publicações:', error);
-      }
-    }
+    // Verificar respostas e converter para JSON
+    const noticias = noticiasRes.ok ? await noticiasRes.json() : [];
+    const eventos = eventosRes.ok ? await eventosRes.json() : [];
+    const destaques = destaquesRes.ok ? await destaquesRes.json() : [];
 
-    function renderizarPublicacoes(publicacoes) {
-      const container = document.getElementById('publicacoes-container');
-      container.innerHTML = publicacoes.map(pub => `
-        <div class="publicacao-item" data-id="${pub._id}" data-tipo="${pub.__tipo}">
-          <div class="tipo-badge">${pub.__tipo === 'noticias' ? 'Notícia' : 'Evento'}</div>
-          <div class="botoes-acao">
-            <button class="btn-editar" onclick="abrirEdicao('${pub._id}', '${pub.__tipo}')">Editar</button>
-            <button class="btn-excluir" onclick="excluirPublicacao('${pub._id}', '${pub.__tipo}')">Excluir</button>
-          </div>
-          <h3>${pub.titulo}</h3>
-          ${pub.midia ? `
-            <div>
-              ${pub.midia.endsWith('.mp4') ?
-                `<video src="${pub.midia}" controls style="max-width:200px;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'video')"></video>` :
-                `<img src="${pub.midia}" style="max-width:200px; cursor:pointer;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'img')">`
-              }
-            </div>` : ''
-          }
-          <p>${pub.conteudo}</p>
-          <small>Publicado em: ${new Date(pub.data).toLocaleDateString()}</small>
+    // Adicionar tipo a cada publicação
+    const noticiasComTipo = noticias.map(item => ({ ...item, __tipo: 'noticias' }));
+    const eventosComTipo = eventos.map(item => ({ ...item, __tipo: 'eventos' }));
+    const destaquesComTipo = destaques.map(item => ({ ...item, __tipo: 'destaques' }));
+
+    // Combinar sem duplicação
+    const todasPublicacoes = [
+      ...noticiasComTipo, 
+      ...eventosComTipo, 
+      ...destaquesComTipo
+    ].sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    renderizarPublicacoes(todasPublicacoes);
+  } catch (error) {
+    console.error('Erro ao carregar publicações:', error);
+  }
+}
+
+function renderizarPublicacoes(publicacoes) {
+  const container = document.getElementById('publicacoes-container');
+  container.innerHTML = publicacoes.map(pub => {
+    // Determinar o tipo correto
+    const tipo = pub.__tipo || 'noticias';
+    const tipoTexto = tipo === 'noticias' ? 'Notícia' : 
+                     tipo === 'eventos' ? 'Evento' : 
+                     'Destaque';
+
+    return `
+      <div class="publicacao-item" data-id="${pub._id}" data-tipo="${tipo}">
+        <div class="tipo-badge">${tipoTexto}</div>
+        <div class="botoes-acao">
+          <button class="btn-editar" onclick="abrirEdicao('${pub._id}', '${tipo}')">Editar</button>
+          <button class="btn-excluir" onclick="excluirPublicacao('${pub._id}', '${tipo}')">Excluir</button>
         </div>
-      `).join('');
-    }
-
+        <h3>${pub.titulo}</h3>
+        ${pub.midia ? `
+          <div>
+            ${pub.midia.endsWith('.mp4') ?
+              `<video src="${pub.midia}" controls style="max-width:200px;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'video')"></video>` :
+              `<img src="${pub.midia}" style="max-width:200px; cursor:pointer;" onclick="abrirVisualizacaoMidia('${pub.midia}', 'img')">`
+            }
+          </div>` : ''
+        }
+        <p>${pub.conteudo}</p>
+        ${pub.link ? `<p><strong>Link:</strong> <a href="${pub.link}" target="_blank">${pub.link}</a></p>` : ''}
+        <small>Publicado em: ${new Date(pub.data).toLocaleDateString()}</small>
+      </div>
+    `;
+  }).join('');
+}
 
 
 // Função salvarEdicao corrigida
@@ -365,8 +393,11 @@ async function abrirEdicao(id, tipo) {
     document.getElementById('formEditar').innerHTML = `
       <input type="text" id="edit-titulo" value="${data.titulo}" required>
       <textarea id="edit-conteudo" required>${data.conteudo}</textarea>
+      <input type="url" id="edit-link" value="${data.link || ''}" placeholder="Link externo">
       <label>Nova mídia (opcional):
+
         <input type="file" id="edit-midia" name="midia">
+        
       </label>
       ${data.midia ? `<p>Mídia atual: <a href="${data.midia}" target="_blank">Visualizar</a></p>` : ''}
       <button type="button" onclick="salvarEdicao()">Salvar</button>
@@ -423,6 +454,7 @@ async function salvarEdicao() {
     const formData = new FormData();
     formData.append('titulo', document.getElementById('edit-titulo').value);
     formData.append('conteudo', document.getElementById('edit-conteudo').value);
+    formData.append('link', document.getElementById('edit-link').value);
     
     const midiaInput = document.getElementById('edit-midia');
     if (midiaInput.files[0]) {

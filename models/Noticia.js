@@ -21,7 +21,11 @@ const noticiaSchema = new mongoose.Schema({
   data: { 
     type: Date, 
     default: Date.now 
-  }
+  },
+  link: {
+  type: String,
+  default: ''
+}
 });
 
 module.exports = mongoose.model('Noticia', noticiaSchema);

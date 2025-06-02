@@ -1,86 +1,79 @@
-// Função de busca melhorada
+function highlightSearchTerm(element, searchTerm) {
+  const regex = new RegExp(`(${searchTerm})`, 'gi');
+  const nodes = element.childNodes;
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    
+    if (node.nodeType === 3) { // Text node
+      const text = node.textContent;
+      const newText = text.replace(regex, '<span class="search-highlight">$1</span>');
+      
+      if (newText !== text) {
+        const newElement = document.createElement('span');
+        newElement.innerHTML = newText;
+        node.parentNode.replaceChild(newElement, node);
+      }
+    } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') { // Element node
+      highlightSearchTerm(node, searchTerm);
+    }
+  }
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.search-highlight').forEach(highlight => {
+    const parent = highlight.parentNode;
+    parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+    parent.normalize();
+  });
+}
+
 function performSearch() {
-  const searchTerm = document.getElementById('site-search').value.toLowerCase().trim();
+  const searchTerm = document.getElementById('site-search').value.trim();
   if (!searchTerm) {
     clearHighlights();
     return;
   }
-  
-  // Busca em todas as seções de conteúdo
-  const sections = ['noticias', 'eventos', 'quem-somos', 'contato'];
-  let resultsFound = false;
-  
-  // Primeiro limpe os destaques anteriores
+
   clearHighlights();
   
+  // Escapar caracteres especiais para regex
+  const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  const sections = ['noticias', 'eventos', 'quem-somos', 'contato'];
+  let resultsFound = false;
+
   sections.forEach(section => {
     const sectionElement = document.getElementById(section);
     if (!sectionElement) return;
     
-    const elements = sectionElement.querySelectorAll('*:not(script):not(style)');
-    let sectionMatch = false;
+    highlightSearchTerm(sectionElement, escapedTerm);
     
-    elements.forEach(el => {
-      if (el.childNodes.length > 0 && el.textContent.toLowerCase().includes(searchTerm)) {
-        // Salvar o fundo original
-        if (!el.dataset.originalBg) {
-          el.dataset.originalBg = el.style.backgroundColor || '';
-        }
-        
-        // Destacar
-        el.style.backgroundColor = '#ffffcc';
-        el.style.color = '#000';
-        sectionMatch = true;
-        resultsFound = true;
-        
-        // Rolar para o elemento se for o primeiro resultado
-        if (!document.querySelector('.search-highlighted')) {
-          el.classList.add('search-highlighted');
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-    });
-    
-    // Destacar cabeçalho da seção
-    const header = sectionElement.querySelector('h2');
-    if (header && sectionMatch) {
-      if (!header.dataset.originalBg) {
-        header.dataset.originalBg = header.style.backgroundColor || '';
-      }
-      header.style.backgroundColor = '#ff6600';
+    if (sectionElement.querySelector('.search-highlight')) {
+      resultsFound = true;
+      sectionElement.classList.add('has-results');
     }
   });
-  
+
   // Feedback visual
   const searchBtn = document.getElementById('search-btn');
-  if (resultsFound) {
+  const firstHighlight = document.querySelector('.search-highlight');
+  
+  if (firstHighlight) {
+    firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
     searchBtn.textContent = '✓';
     searchBtn.style.background = '#4CAF50';
   } else {
     searchBtn.textContent = '✕';
     searchBtn.style.background = '#f44336';
-    alert('Nenhum resultado encontrado para: ' + searchTerm);
   }
-  
+
   setTimeout(() => {
     searchBtn.textContent = '🔍';
     searchBtn.style.background = '#ff6600';
   }, 2000);
 }
 
-// Limpar destaques
-function clearHighlights() {
-  document.querySelectorAll('[data-original-bg]').forEach(el => {
-    el.style.backgroundColor = el.dataset.originalBg;
-    el.style.color = '';
-  });
-  
-  document.querySelectorAll('.search-highlighted').forEach(el => {
-    el.classList.remove('search-highlighted');
-  });
-}
-
-// Event Listeners melhorados
 document.addEventListener('DOMContentLoaded', () => {
   const searchBtn = document.getElementById('search-btn');
   const searchInput = document.getElementById('site-search');
@@ -91,13 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') performSearch();
     });
     
-    // Limpar busca quando o campo estiver vazio
     searchInput.addEventListener('input', (e) => {
-      if (e.target.value.trim() === '') {
-        clearHighlights();
-      }
+      if (e.target.value.trim() === '') clearHighlights();
     });
-  } else {
-    console.error('Elementos de busca não encontrados!');
   }
 });

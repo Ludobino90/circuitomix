@@ -30,6 +30,10 @@
   </div>
 
   <div id="content">
+    <section id="destaques">
+      <h2>DESTAQUES</h2>
+      <div id="destaques-content" class="destaques-container"></div>
+    </section>
     <section id="noticias">
       <h2>NOTÍCIAS</h2>
       <div id="noticias-content"></div>
@@ -71,54 +75,6 @@
   
   <script src="./js/player.js"></script>
   <script src="./js/main.js"></script>
-  <script>
-    // Função de busca simplificada
-    document.getElementById('search-btn').addEventListener('click', performSearch);
-    document.getElementById('site-search').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') performSearch();
-    });
-
-    function performSearch() {
-      const term = document.getElementById('site-search').value.toLowerCase().trim();
-      if (!term) return;
-      
-      // Elementos onde buscar
-      const elements = document.querySelectorAll('#content *:not(script):not(style)');
-      let found = false;
-      
-      // Resetar destaques anteriores
-      elements.forEach(el => {
-        el.style.backgroundColor = '';
-        el.style.color = '';
-      });
-      
-      // Realizar busca
-      elements.forEach(el => {
-        if (el.textContent.toLowerCase().includes(term)) {
-          el.style.backgroundColor = '#ffffcc';
-          el.style.color = '#000';
-          found = true;
-          
-          // Rolar para o primeiro resultado
-          if (!found) el.scrollIntoView({behavior: 'smooth', block: 'center'});
-        }
-      });
-      
-      // Feedback visual
-      const btn = document.getElementById('search-btn');
-      if (found) {
-        btn.textContent = '✓';
-        btn.style.background = '#4CAF50';
-      } else {
-        btn.textContent = '✕';
-        btn.style.background = '#f44336';
-      }
-      
-      setTimeout(() => {
-        btn.textContent = '🔍';
-        btn.style.background = '#ff6600';
-      }, 2000);
-    }
-  </script>
+  <script src="./js/search.js"></script>
 </body>
 </html>

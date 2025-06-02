@@ -14,8 +14,8 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   scroll-behavior: smooth;
-  background: #000;
-  color: #fff;
+  background: #000000;
+  color: #ffffff;
 }
 
 /* ============== BARRA SUPERIOR ============== */
@@ -103,11 +103,88 @@ body {
 }
 
 /* ============== CONTEÚDO PRINCIPAL ============== */
+/* ============== CONTEÚDO PRINCIPAL ============== */
 #content {
   padding-top: 80px;
-  max-width: 900px;
+  width: 90%; /* Alterado para 90% da largura */
+  max-width: 1400px; /* Aumentado para telas maiores */
   margin: auto;
 }
+
+/* ============== GRID DE NOTÍCIAS ============== */
+#noticias-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.noticia-card {
+  display: flex;
+  background: #222;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 200px;
+  transition: transform 0.3s ease;
+}
+
+.noticia-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.noticia-imagem {
+  flex: 0 0 40%;
+  overflow: hidden;
+}
+
+.noticia-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.noticia-card:hover .noticia-imagem img {
+  transform: scale(1.05);
+}
+
+.noticia-conteudo {
+  flex: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.noticia-conteudo h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: #ff6600;
+}
+
+.noticia-conteudo p {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  margin-bottom: 10px;
+  font-size: 0.95em;
+}
+
+.noticia-conteudo small {
+  color: #aaa;
+  font-size: 0.8em;
+}
+
+
+
+
+
+
 
 section {
   padding: 40px 20px;
@@ -309,6 +386,7 @@ video.midia {
 }
 
 /* ============== DESTAQUES DE BUSCA ============== */
+/* Mantido para compatibilidade com elementos existentes */
 .search-highlighted {
   border: 2px solid #ff6600 !important;
   animation: pulse 1s infinite;
@@ -318,6 +396,28 @@ video.midia {
   0% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7); }
   70% { box-shadow: 0 0 0 10px rgba(255, 102, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0); }
+}
+
+/* NOVOS ESTILOS PARA DESTAQUE DE PALAVRAS-CHAVE */
+.search-highlight {
+  background-color: #ffff00;
+  color: #000;
+  font-weight: bold;
+  padding: 0 2px;
+  border-radius: 3px;
+  animation: highlight-pulse 0.5s ease-in-out 3;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: #ffff00; }
+  50% { background-color: #ffcc00; }
+  100% { background-color: #ffff00; }
+}
+
+/* Remover estilos antigos de destaque */
+[data-original-bg] {
+  background-color: unset !important;
+  color: unset !important;
 }
 
 /* ============== RESPONSIVIDADE ============== */
@@ -337,10 +437,6 @@ video.midia {
     flex-direction: row;
   }
   
-  #content {
-    padding-top: 160px;
-    padding: 20px;
-  }
   
   section {
     padding: 20px 10px;
@@ -367,10 +463,125 @@ video.midia {
   audio {
     width: 100%;
   }
+  
+  /* Ajustes para destaque em dispositivos móveis */
+  .search-highlight {
+    padding: 0 1px;
+    font-size: 0.95em;
+  }
 }
 
 /* ============== QUEBRA DE TEXTO ============== */
 .card p, .card h3, .card small {
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+/* ============== DESTAQUES ============== */
+.destaques-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.destaque-principal {
+  flex: 2;
+  min-width: 300px;
+  position: relative;
+  height: 500px; /* Altura fixa para o destaque principal */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.destaques-secundarios {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 250px;
+}
+
+.destaque-secundario {
+  flex: 1;
+  position: relative;
+  height: 242.5px; /* (500px - 15px gap) / 2 */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.destaque-imagem {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.destaque-conteudo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  color: white;
+}
+
+.destaque-conteudo h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.4em;
+}
+
+.destaque-principal:hover .destaque-imagem,
+.destaque-secundario:hover .destaque-imagem {
+  transform: scale(1.05);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .destaques-container {
+    flex-direction: column;
+  }
+  
+  .destaque-principal,
+  .destaque-secundario {
+    height: 300px;
+  }
+}
+
+@media (max-width: 900px) {
+  #noticias-content {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  #content {
+    width: 95%;
+    padding-top: 160px;
+  }
+  
+  #noticias-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .noticia-card {
+    height: auto;
+    flex-direction: column;
+  }
+  
+  .noticia-imagem {
+    flex: 0 0 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  #content {
+    width: 100%;
+  }
+  
+  .noticia-imagem {
+    flex: 0 0 150px;
+  }
 }

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const eventoSchema = new mongoose.Schema({
+const destaqueSchema = new mongoose.Schema({
   titulo: {
     type: String,
     required: true,
@@ -18,17 +18,14 @@ const eventoSchema = new mongoose.Schema({
       message: "Formato de arquivo inválido!"
     }
   },
-  
+  link: {
+    type: String,
+    default: ''
+  },
   data: { 
     type: Date, 
     default: Date.now 
-  },
-
-  link: {
-  type: String,
-  default: ''
-}
+  }
 });
 
-module.exports = mongoose.model('Evento', eventoSchema);
-
+module.exports = mongoose.model('Destaque', destaqueSchema);
