@@ -6,7 +6,6 @@
   <title>Rádio Online</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/3.7.0/howler.min.js"></script>
-  
 </head>
 <body>
   <!-- Barra Superior com Logo, Player e Busca -->
@@ -34,14 +33,23 @@
       <h2>DESTAQUES</h2>
       <div id="destaques-content" class="destaques-container"></div>
     </section>
+
     <section id="noticias">
       <h2>NOTÍCIAS</h2>
-      <div id="noticias-content"></div>
+      <div class="conteudo-paginado-wrapper">
+        <div class="seta seta-esquerda">←</div>
+        <div class="conteudo-paginado" id="noticias-content"></div>
+        <div class="seta seta-direita">→</div>
+      </div>
     </section>
 
     <section id="eventos">
       <h2>EVENTOS</h2>
-      <div id="eventos-content"></div>
+      <div class="conteudo-paginado-wrapper">
+        <div class="seta seta-esquerda">←</div>
+        <div class="conteudo-paginado" id="eventos-content"></div>
+        <div class="seta seta-direita">→</div>
+      </div>
     </section>
 
     <section id="publicidade">
@@ -76,5 +84,13 @@
   <script src="./js/player.js"></script>
   <script src="./js/main.js"></script>
   <script src="./js/search.js"></script>
+  <!-- Modal de Detalhes -->
+<div id="modal-detalhes" class="modal-detalhes oculto">
+  <div class="modal-conteudo">
+    <button id="fechar-modal" class="fechar-modal">&times;</button>
+    <div id="modal-info"></div>
+  </div>
+</div>
+
 </body>
 </html>

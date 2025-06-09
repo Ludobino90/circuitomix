@@ -199,9 +199,6 @@
   <div id="conteudo-midia"></div>
 </div>
 
-
-
-  <!-- Atualize o script para -->
 <script>
   let publicacaoEditando = {};
 
@@ -212,7 +209,7 @@
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(senha) // Adicionar esta linha
+        'Authorization': 'Basic ' + btoa(senha) 
       },
       body: JSON.stringify({ senha })
     });
@@ -327,7 +324,7 @@ function renderizarPublicacoes(publicacoes) {
 }
 
 
-// Função salvarEdicao corrigida
+// Função salvarEdicao
 async function salvarEdicao() {
   const formData = new FormData();
   formData.append('titulo', document.getElementById('edit-titulo').value);
@@ -489,7 +486,7 @@ window.addEventListener('DOMContentLoaded', () => {
     })
     .then(res => {
       if (res.ok) {
-        document.body.classList.add('admin-autenticado'); // Adiciona classe
+        document.body.classList.add('admin-autenticado'); // <<<< Adiciona classe
         carregarPublicacoes();
       } else {
         sessionStorage.removeItem('authToken');

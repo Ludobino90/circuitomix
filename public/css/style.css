@@ -103,7 +103,6 @@ body {
 }
 
 /* ============== CONTEÚDO PRINCIPAL ============== */
-/* ============== CONTEÚDO PRINCIPAL ============== */
 #content {
   padding-top: 80px;
   width: 90%; /* Alterado para 90% da largura */
@@ -111,14 +110,80 @@ body {
   margin: auto;
 }
 
-/* ============== GRID DE NOTÍCIAS ============== */
-#noticias-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 25px;
-  margin-top: 20px;
+/* ============== SETAS DE ROLAGEM (apenas para noticias e eventos) ============== */
+.conteudo-paginado-wrapper {
+  position: relative;
+  overflow: visible; /* Permite que as setas fiquem fora da área do conteúdo */
 }
 
+/* Setas */
+.conteudo-paginado-wrapper .seta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ff6600;
+  color: #000;
+  font-size: 2em;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 2;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.conteudo-paginado-wrapper .seta:hover {
+  background: #ffa84c;
+}
+
+.conteudo-paginado-wrapper .seta-esquerda {
+  left: -50px; /* Posiciona fora do conteúdo */
+}
+
+.conteudo-paginado-wrapper .seta-direita {
+  right: -50px; /* Posiciona fora do conteúdo */
+}
+
+/* Wrapper com overflow para animação slide */
+.conteudo-paginado {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+/* Grade para notícias/eventos */
+.grid-paginado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 25px;
+  transition: transform 0.5s ease-in-out;
+  min-height: 450px; /* Altura mínima para 2 linhas */
+}
+
+.slide {
+  display: contents; /* Mantém os cards como filhos diretos do grid */
+}
+
+.noticia-card {
+  height: 200px;
+}
+
+/* Ajuste de responsividade */
+@media (max-width: 1200px) {
+  .grid-paginado {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-paginado {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============== GRID DE NOTÍCIAS ============== */
 .noticia-card {
   display: flex;
   background: #222;
@@ -179,12 +244,6 @@ body {
   color: #aaa;
   font-size: 0.8em;
 }
-
-
-
-
-
-
 
 section {
   padding: 40px 20px;
@@ -386,7 +445,6 @@ video.midia {
 }
 
 /* ============== DESTAQUES DE BUSCA ============== */
-/* Mantido para compatibilidade com elementos existentes */
 .search-highlighted {
   border: 2px solid #ff6600 !important;
   animation: pulse 1s infinite;
@@ -414,30 +472,54 @@ video.midia {
   100% { background-color: #ffff00; }
 }
 
-/* Remover estilos antigos de destaque */
-[data-original-bg] {
-  background-color: unset !important;
-  color: unset !important;
-}
-
 /* ============== RESPONSIVIDADE ============== */
 @media (max-width: 768px) {
   #top-bar {
-    flex-direction: column;
-    gap: 10px;
+    display: flex;
+    flex-direction: column; /* empilha os elementos verticalmente */
+    align-items: stretch;
+    padding: 10px;
+    gap: 12px;
   }
-  
-  #logo, #radio-player, #search-area {
+
+  #logo {
     width: 100%;
+    display: flex;
+    justify-content: flex-start; /* logo à esquerda */
+  }
+
+  #radio-player {
+    width: 100%;
+    display: flex;
     justify-content: center;
-    min-width: auto;
   }
-  
+
   #player-controls {
+    display: flex;
     flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
   }
-  
-  
+
+  #search-area {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  #site-search {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  #search-btn {
+    padding: 6px 12px;
+  }
+
   section {
     padding: 20px 10px;
   }
@@ -468,6 +550,22 @@ video.midia {
   .search-highlight {
     padding: 0 1px;
     font-size: 0.95em;
+  }
+
+  /* Ajustes para setas em dispositivos móveis */
+  .conteudo-paginado-wrapper .seta {
+    position: relative;
+    top: auto;
+    transform: none;
+    display: inline-block;
+    margin: 15px 10px;
+  }
+  
+  .conteudo-paginado-wrapper .seta-esquerda,
+  .conteudo-paginado-wrapper .seta-direita {
+    left: auto;
+    right: auto;
+    position: relative;
   }
 }
 
@@ -584,4 +682,66 @@ video.midia {
   .noticia-imagem {
     flex: 0 0 150px;
   }
+}
+
+.modal-detalhes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.modal-detalhes.oculto {
+  display: none;
+}
+
+.modal-conteudo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 3rem 1.5rem 2rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.modal-conteudo::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+#modal-info {
+  max-width: 900px;
+  margin: 0 auto;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+#modal-info h2 {
+  font-size: 2em;
+  margin-bottom: 1rem;
+}
+
+#modal-info p {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+.fechar-modal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 2rem;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
 }
