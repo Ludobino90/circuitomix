@@ -146,6 +146,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderizarSecao(eventos, 'eventos-content', 'eventos');
 
     // 🎧 PLAYER DE RÁDIO
+
+    // 🎧 Atualizar informações da faixa atual
+async function atualizarInfoRadio() {
+  try {
+    const response = await fetch('https://centova01.logicahost.com.br:20003/api/liveinfo');
+    if (!response.ok) throw new Error('Erro na API');
+    
+    const data = await response.json();
+    const status = document.getElementById('status');
+    const faixaAtual = document.getElementById('faixaAtual');
+    
+    if (data && data.liveinfo) {
+      if (status) {
+        status.textContent = '🟢 Online';
+        status.setAttribute('success', '');
+        status.removeAttribute('error');
+      }
+      
+      if (faixaAtual) {
+        faixaAtual.textContent = data.liveinfo.title || 'Transmissão ao vivo';
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao obter informações da rádio:', error);
+    const status = document.getElementById('status');
+    if (status) {
+      status.textContent = '🔴 Offline';
+      status.setAttribute('error', '');
+      status.removeAttribute('success');
+    }
+  }
+}
+
+// Chamar a função periodicamente
+if (document.getElementById('status')) {
+  setInterval(atualizarInfoRadio, 15000);
+  atualizarInfoRadio(); // Chamar imediatamente ao carregar
+}
     const player = document.getElementById('player');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const faixaAtual = document.getElementById('faixaAtual');

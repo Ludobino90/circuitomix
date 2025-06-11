@@ -1,48 +1,63 @@
 let isPlaying = false;
+let radioStream = null;
 
-const radioStream = new Howl({
-  src: ['https://centova01.logicahost.com.br:20003/stream'],
-  html5: true,
-  format: ['mp3'],
-  autoplay: false,
-  preload: 'metadata',
-  volume: 0.8,
-  onplay: () => {
-    isPlaying = true;
-    updatePlayButton();
-    updateStatus(true);
-  },
-  onpause: () => {
-    isPlaying = false;
-    updatePlayButton();
-    updateStatus(false);
-  },
-  onend: () => {
-    isPlaying = false;
-    updatePlayButton();
-    updateStatus(false);
-  },
-  onloaderror: (id, error) => {
-    console.error('Erro no player:', error);
-    alert('Erro ao conectar à rádio!');
-    updateStatus(false, true);
-  },
-  onplayerror: (id, error) => {
-    console.error('Erro ao reproduzir:', error);
-    alert('Erro ao iniciar a reprodução!');
-    updateStatus(false, true);
+function initRadio() {
+  // Destruir instância anterior se existir
+  if (radioStream) {
+    radioStream.unload();
   }
-});
+
+  radioStream = new Howl({
+    src: ['https://live9.livemus.com.br:27060/stream'],
+    html5: true,
+    format: ['mp3'],
+    autoplay: false,
+    preload: 'metadata',
+    volume: 0.8,
+    onplay: () => {
+      isPlaying = true;
+      updatePlayButton();
+      updateStatus(true);
+    },
+    onpause: () => {
+      isPlaying = false;
+      updatePlayButton();
+      updateStatus(false);
+    },
+    onend: () => {
+      isPlaying = false;
+      updatePlayButton();
+      updateStatus(false);
+    },
+    onloaderror: (id, error) => {
+      console.error('Erro no player:', error);
+      updateStatus(false, true);
+      
+      // Tentar reconectar após 5 segundos
+      setTimeout(initRadio, 5000);
+    },
+    onplayerror: (id, error) => {
+      console.error('Erro ao reproduzir:', error);
+      updateStatus(false, true);
+      
+      // Tentar novamente após 3 segundos
+      setTimeout(() => {
+        if (radioStream) radioStream.play();
+      }, 3000);
+    }
+  });
+}
 
 function togglePlay() {
-  if (!radioStream) return;
+  if (!radioStream) {
+    initRadio();
+  }
 
   if (isPlaying) {
     radioStream.pause();
   } else {
     radioStream.play().catch((error) => {
       console.error("Erro ao reproduzir:", error);
-      alert("Erro ao iniciar reprodução!");
       updateStatus(false, true);
     });
   }
@@ -50,31 +65,48 @@ function togglePlay() {
 
 function updatePlayButton() {
   const btn = document.getElementById('playPauseBtn');
-  btn.textContent = isPlaying ? '⏸ Pause' : '▶️ Play';
+  if (btn) {
+    btn.textContent = isPlaying ? '⏸ Pause' : '▶️ Play';
+  }
 }
 
 function updateStatus(isOnline, hasError = false) {
   const status = document.getElementById('status');
-  if (hasError) {
-    status.textContent = '🔴 Erro';
-    status.setAttribute('error', '');
-    status.removeAttribute('success');
-  } else if (isOnline) {
-    status.textContent = '🟢 Online';
-    status.setAttribute('success', '');
-    status.removeAttribute('error');
-  } else {
-    status.textContent = '🔴 Offline';
-    status.setAttribute('error', '');
-    status.removeAttribute('success');
+  if (status) {
+    if (hasError) {
+      status.textContent = '🔴 Erro';
+      status.setAttribute('error', '');
+      status.removeAttribute('success');
+    } else if (isOnline) {
+      status.textContent = '🟢 Online';
+      status.setAttribute('success', '');
+      status.removeAttribute('error');
+    } else {
+      status.textContent = '🔴 Offline';
+      status.setAttribute('error', '');
+      status.removeAttribute('success');
+    }
   }
 }
 
-document.getElementById('playPauseBtn').addEventListener('click', togglePlay);
+// Inicializar ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+  initRadio();
+  
+  // Configurar botão de play/pause
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  if (playPauseBtn) {
+    playPauseBtn.addEventListener('click', togglePlay);
+  }
 
-// Volume control
-const volumeSlider = document.getElementById('volume');
-volumeSlider.addEventListener('input', (e) => {
-  const vol = parseFloat(e.target.value);
-  radioStream.volume(vol);
+  // Configurar controle de volume
+  const volumeSlider = document.getElementById('volume');
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', (e) => {
+      const vol = parseFloat(e.target.value);
+      if (radioStream) {
+        radioStream.volume(vol);
+      }
+    });
+  }
 });

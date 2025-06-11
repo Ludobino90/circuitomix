@@ -19,6 +19,7 @@ body {
 }
 
 /* ============== BARRA SUPERIOR ============== */
+/* ============== BARRA SUPERIOR (UNIFICADA E OTIMIZADA) ============== */
 #top-bar {
   position: fixed;
   top: 0;
@@ -27,15 +28,18 @@ body {
   justify-content: space-between;
   align-items: center;
   background: #111;
-  padding: 10px;
+  padding: 10px 20px;
   z-index: 1000;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
 #logo {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   min-width: 100px;
-  padding: 0 10px;
 }
 
 #logo a {
@@ -45,19 +49,20 @@ body {
   text-decoration: none;
 }
 
-#logo a img{
-  height: 50px; /* padrão seguro */
-  width: auto; /* mantém proporção */
-  padding-left:50px ;
+#logo a img {
+  height: 50px;
+  width: auto;
+  padding-left: 10px;
 }
+
 
 #radio-player {
   flex: 2;
-  min-width: 300px;
-  text-align: center;
+  min-width: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: transparent;
-  padding: 0;
-  position: static;
 }
 
 #player-controls {
@@ -66,7 +71,6 @@ body {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 0;
 }
 
 #player-controls button {
@@ -78,12 +82,18 @@ body {
   color: #fff;
 }
 
+#volume {
+  width: 100px;
+}
+
+
 #search-area {
   flex: 1;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   min-width: 200px;
-  padding: 0 10px;
+  gap: 5px;
 }
 
 #site-search {
@@ -94,13 +104,50 @@ body {
 }
 
 #search-btn {
-  padding: 8px 15px;
+  padding: 7px 15px;
   background: #ff6600;
   color: white;
   border: none;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
 }
+
+/* ============== RESPONSIVIDADE DA BARRA SUPERIOR ============== */
+@media (max-width: 768px) {
+  #top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
+    gap: 12px;
+  }
+
+  #logo,
+  #radio-player,
+  #search-area {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #logo {
+    justify-content: flex-start;
+  }
+
+  #site-search {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  #search-btn {
+    padding: 6px 12px;
+  }
+
+  #player-controls {
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+  }
+}
+
 
 /* ============== CONTEÚDO PRINCIPAL ============== */
 #content {
@@ -309,8 +356,11 @@ footer {
 
 /* ============== STATUS DO PLAYER ============== */
 #status {
-  padding: 10px;
-  margin-top: 15px;
+   padding: 6px 12px;
+  border-radius: 4px;
+  background: #222;
+  font-size: 0.9em;
+  color: #ccc;
   border-radius: 4px;
   text-align: center;
 }
@@ -509,6 +559,7 @@ video.midia {
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
+    
   }
 
   #site-search {
@@ -560,6 +611,8 @@ video.midia {
     display: inline-block;
     margin: 15px 10px;
   }
+
+
   
   .conteudo-paginado-wrapper .seta-esquerda,
   .conteudo-paginado-wrapper .seta-direita {
@@ -659,6 +712,10 @@ video.midia {
     width: 95%;
     padding-top: 160px;
   }
+  #destaques {
+        padding: 20px 10px;
+        margin-top: 50px;
+  }
   
   #noticias-content {
     grid-template-columns: 1fr;
@@ -678,6 +735,7 @@ video.midia {
   #content {
     width: 100%;
   }
+
   
   .noticia-imagem {
     flex: 0 0 150px;
@@ -744,4 +802,56 @@ video.midia {
   border: none;
   color: #fff;
   cursor: pointer;
+}
+
+/*BULLETS DO RESPONSIVO!!*/
+
+/* ============== PAGINAÇÃO RESPONSIVA COM SCROLL E BULLETS ============== */
+@media (max-width: 768px) {
+  .conteudo-paginado-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+  }
+
+  .conteudo-paginado {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    scroll-snap-type: x mandatory;
+    overflow-x: auto;
+  }
+
+  .conteudo-paginado .noticia-card {
+    min-width: 85%;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+
+  .conteudo-paginado-wrapper .seta {
+    display: none !important;
+  }
+
+  .bullets {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  .bullets span {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 5px;
+    background-color: #666;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+  }
+
+  .bullets .ativo {
+    background-color: #ff6600;
+  }
 }
