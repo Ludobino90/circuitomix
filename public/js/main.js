@@ -98,12 +98,17 @@ document.addEventListener("DOMContentLoaded", async () => {
               : `<img src="${item.midia}" alt="${item.titulo}">`
             : '<div style="background:#333; width:100%; height:100%;"></div>';
 
+          const textoCompleto = item.conteudo ?? 'Conteúdo não disponível';
+          const textoCurto = textoCompleto.length > 200 ? textoCompleto.substring(0, 200) + '...' : textoCompleto;
+
           html += `
             <div class="noticia-card abrir-detalhes" data-id="${item._id}" data-tipo="${tipo}">
               <div class="noticia-imagem">${mediaHTML}</div>
               <div class="noticia-conteudo">
                 <h3>${item.titulo ?? 'Sem título'}</h3>
-                <p>${item.conteudo ?? 'Conteúdo não disponível'}</p>
+                <p class="texto-curto">${textoCurto}</p>
+                <p class="texto-completo" style="display:none;">${textoCompleto}</p>
+                ${textoCompleto.length > 200 ? '<button class="ver-mais-btn">Ver mais</button>' : ''}
                 <small>
                   ${tipo === 'noticias' ? 'Publicado' : 'Data do evento'}: 
                   ${new Date(item.data).toLocaleDateString('pt-BR')}
@@ -146,44 +151,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderizarSecao(eventos, 'eventos-content', 'eventos');
 
     // 🎧 PLAYER DE RÁDIO
+    async function atualizarInfoRadio() {
+      try {
+        const response = await fetch('https://centova01.logicahost.com.br:20003/api/liveinfo');
+        if (!response.ok) throw new Error('Erro na API');
 
-    // 🎧 Atualizar informações da faixa atual
-async function atualizarInfoRadio() {
-  try {
-    const response = await fetch('https://centova01.logicahost.com.br:20003/api/liveinfo');
-    if (!response.ok) throw new Error('Erro na API');
-    
-    const data = await response.json();
-    const status = document.getElementById('status');
-    const faixaAtual = document.getElementById('faixaAtual');
-    
-    if (data && data.liveinfo) {
-      if (status) {
-        status.textContent = '🟢 Online';
-        status.setAttribute('success', '');
-        status.removeAttribute('error');
-      }
-      
-      if (faixaAtual) {
-        faixaAtual.textContent = data.liveinfo.title || 'Transmissão ao vivo';
+        const data = await response.json();
+        const status = document.getElementById('status');
+        const faixaAtual = document.getElementById('faixaAtual');
+
+        if (data && data.liveinfo) {
+          if (status) {
+            status.textContent = '🟢 Online';
+            status.setAttribute('success', '');
+            status.removeAttribute('error');
+          }
+
+          if (faixaAtual) {
+            faixaAtual.textContent = data.liveinfo.title || 'Transmissão ao vivo';
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao obter informações da rádio:', error);
+        const status = document.getElementById('status');
+        if (status) {
+          status.textContent = '🔴 Offline';
+          status.setAttribute('error', '');
+          status.removeAttribute('success');
+        }
       }
     }
-  } catch (error) {
-    console.error('Erro ao obter informações da rádio:', error);
-    const status = document.getElementById('status');
-    if (status) {
-      status.textContent = '🔴 Offline';
-      status.setAttribute('error', '');
-      status.removeAttribute('success');
-    }
-  }
-}
 
-// Chamar a função periodicamente
-if (document.getElementById('status')) {
-  setInterval(atualizarInfoRadio, 15000);
-  atualizarInfoRadio(); // Chamar imediatamente ao carregar
-}
+    if (document.getElementById('status')) {
+      setInterval(atualizarInfoRadio, 15000);
+      atualizarInfoRadio();
+    }
+
     const player = document.getElementById('player');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const faixaAtual = document.getElementById('faixaAtual');
@@ -213,7 +216,7 @@ if (document.getElementById('status')) {
       setInterval(atualizarFaixa, 15000);
     }
 
-    // 🪟 MODAL DE DETALHES
+    // MODAL
     function abrirModal(dados) {
       const modal = document.getElementById('modal-detalhes');
       const modalInfo = document.getElementById('modal-info');
@@ -251,10 +254,26 @@ if (document.getElementById('status')) {
           const res = await fetch(`/api/${tipo}/${id}`);
           if (!res.ok) throw new Error('Erro ao buscar detalhes');
           const dados = await res.json();
-          dados.__tipo = tipo.slice(0, -1); // "noticias" → "noticia", "eventos" → "evento"
+          dados.__tipo = tipo.slice(0, -1); // "noticias" → "noticia"
           abrirModal(dados);
         } catch (err) {
           alert('Erro ao carregar detalhes');
+        }
+      }
+
+      if (e.target.classList.contains('ver-mais-btn')) {
+        const card = e.target.closest('.noticia-conteudo');
+        const textoCurto = card.querySelector('.texto-curto');
+        const textoCompleto = card.querySelector('.texto-completo');
+
+        if (textoCurto.style.display !== 'none') {
+          textoCurto.style.display = 'none';
+          textoCompleto.style.display = 'block';
+          e.target.textContent = 'Ver menos';
+        } else {
+          textoCurto.style.display = 'block';
+          textoCompleto.style.display = 'none';
+          e.target.textContent = 'Ver mais';
         }
       }
     });

@@ -701,11 +701,11 @@ video.midia {
   }
 }
 
-@media (max-width: 900px) {
+/*@media (max-width: 900px) {
   #noticias-content {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
-}
+}*/
 
 @media (max-width: 768px) {
   #content {
@@ -830,6 +830,7 @@ video.midia {
     min-width: 85%;
     flex-shrink: 0;
     scroll-snap-align: start;
+    width:100%;
   }
 
   .conteudo-paginado-wrapper .seta {
